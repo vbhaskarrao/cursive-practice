@@ -2,24 +2,56 @@ import os
 import sys
 
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.colors import HexColor
+from reportlab.lib.colors import HexColor, black
 
 # Page geometry
 PAGE_WIDTH, PAGE_HEIGHT = A4  # 595.28, 841.89 pt
-TOP_MARGIN = 72      # pt — room for header
-BOTTOM_MARGIN = 50   # pt
-LEFT_MARGIN = 50     # pt
-RIGHT_MARGIN = 40    # pt
-USABLE_HEIGHT = PAGE_HEIGHT - TOP_MARGIN - BOTTOM_MARGIN
-USABLE_WIDTH = PAGE_WIDTH - LEFT_MARGIN - RIGHT_MARGIN
+BORDER_MARGIN = 28           # pt — outer border inset from page edge
+CONTENT_MARGIN_TOP = 100     # pt — below top border (room for header + title)
+CONTENT_MARGIN_BOTTOM = 10   # pt — above bottom border
+CONTENT_LEFT = BORDER_MARGIN + 10
+CONTENT_RIGHT = PAGE_WIDTH - BORDER_MARGIN - 10
+CONTENT_WIDTH = CONTENT_RIGHT - CONTENT_LEFT
 
-# Row layout
-ROWS_PER_PAGE = 4
-ROW_SLOT_HEIGHT = USABLE_HEIGHT / ROWS_PER_PAGE
+# 3-line group geometry (matching the reference image)
+#   Top line (solid) — where ascenders reach
+#   Middle line (dashed) — x-height / midline
+#   Bottom line (solid) — baseline where you write
+# Space between lines within a group
+LINE_SPACING = 22            # pt between each of the 3 lines
+LINE_GROUP_HEIGHT = LINE_SPACING * 2  # top-to-bottom = 44pt
 
-# 4-line group geometry (3 zones of equal height)
-ZONE_HEIGHT = 18     # pt per zone (ascender, x-height, descender)
-LINE_GROUP_HEIGHT = ZONE_HEIGHT * 3  # 54pt total
+# Number of ruled rows per page
+ROWS_PER_PAGE = 7
+
+# Font
+CURSIVE_FONT_SIZE = 38       # base size — auto-scaled down if text overflows
+HEADER_FONT = "Helvetica"
+HEADER_FONT_BOLD = "Helvetica-Bold"
+HEADER_FONT_SIZE = 10
+TITLE_FONT_SIZE = 20
+
+# Colors — all gray/black like the reference image
+LINE_COLOR = HexColor("#555555")       # dark gray ruled lines
+LINE_COLOR_DASHED = HexColor("#888888")  # slightly lighter dashed midline
+BORDER_COLOR = HexColor("#333333")     # page border
+DOT_COLOR = HexColor("#444444")        # dark dots for traceable text
+HEADER_COLOR = HexColor("#222222")     # header text
+TITLE_BG = HexColor("#333333")         # title banner background
+
+# Dot rendering parameters for the traced text
+DOT_DASH_ON = 0.5    # very short "on" segment — appears as a round dot
+DOT_DASH_OFF = 2.8   # gap between dots
+DOT_LINE_WIDTH = 1.5  # controls dot diameter
+
+# Validation
+FILLER_WORDS = frozenset({
+    "and", "but", "or", "the", "a", "an", "is", "was",
+    "are", "were", "be", "been", "being", "so", "yet",
+    "for", "nor", "at", "in", "on", "to", "it",
+})
+MIN_WORDS = 5
+MAX_FILLER = 3
 
 
 # Font — auto-detect a cursive TTF by platform, or override via CURSIVE_FONT env var
@@ -30,11 +62,19 @@ def _find_cursive_font() -> tuple[str, str]:
         name = os.path.splitext(os.path.basename(env_path))[0]
         return env_path, name
 
-    # Bundled font shipped with the repo (fonts/ directory next to the package)
+    # Bundled fonts shipped with the repo (fonts/ directory next to the package)
     pkg_dir = os.path.dirname(os.path.abspath(__file__))
-    bundled = os.path.join(pkg_dir, os.pardir, "fonts", "DancingScript-Regular.ttf")
-    if os.path.isfile(bundled):
-        return os.path.abspath(bundled), "DancingScript"
+    fonts_dir = os.path.join(pkg_dir, os.pardir, "fonts")
+    bundled_candidates = [
+        ("DancingScript.ttf", "DancingScript"),
+        ("DancingScript-Regular.ttf", "DancingScript"),
+        ("Sacramento-Regular.ttf", "Sacramento"),
+        ("GreatVibes-Regular.ttf", "GreatVibes"),
+    ]
+    for filename, name in bundled_candidates:
+        path = os.path.join(fonts_dir, filename)
+        if os.path.isfile(path) and os.path.getsize(path) > 1000:
+            return os.path.abspath(path), name
 
     # Platform-specific system font search
     candidates: list[tuple[str, str]] = []
@@ -78,21 +118,3 @@ def _find_cursive_font() -> tuple[str, str]:
 
 
 CURSIVE_FONT_PATH, CURSIVE_FONT_NAME = _find_cursive_font()
-CURSIVE_FONT_SIZE = 28  # base size — auto-scaled down if text overflows
-HEADER_FONT = "Helvetica"
-HEADER_FONT_SIZE = 11
-
-# Colors
-BLUE_LINE = HexColor("#4A90D9")
-RED_LINE = HexColor("#D94A4A")
-DOTTED_TEXT_COLOR = HexColor("#999999")
-HEADER_COLOR = HexColor("#333333")
-
-# Validation
-FILLER_WORDS = frozenset({
-    "and", "but", "or", "the", "a", "an", "is", "was",
-    "are", "were", "be", "been", "being", "so", "yet",
-    "for", "nor", "at", "in", "on", "to", "it",
-})
-MIN_WORDS = 5
-MAX_FILLER = 3
