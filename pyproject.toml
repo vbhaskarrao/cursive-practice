@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cursive-practice"
+version = "0.1.0"
+description = "Generate cursive handwriting practice sheets as printable A4 PDFs for students"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Bhaskar Vedula"},
+]
+keywords = ["cursive", "handwriting", "practice", "education", "pdf"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Education",
+]
+dependencies = [
+    "reportlab>=4.0",
+]
+
+[project.scripts]
+cursive-practice = "cursive_practice.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/vbhaskarrao/cursive-practice"
+Issues = "https://github.com/vbhaskarrao/cursive-practice/issues"
+
+[tool.setuptools.packages.find]
+include = ["cursive_practice*"]
